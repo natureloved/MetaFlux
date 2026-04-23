@@ -1,87 +1,41 @@
-# 🌌 MetaFlux: OpenMetadata MCP Server
+# 🌌 MetaFlux Upgraded
 
-MetaFlux is a powerful **Model Context Protocol (MCP)** server that bridges AI assistants with the [OpenMetadata](https://open-metadata.org/) ecosystem. It allows AI agents to discover, document, and govern data assets directly through natural language.
+> Talk to your data catalog in plain English.
 
-## 🚀 Features
+MetaFlux is a premium AI-powered data command center that bridges human conversation with complex data ecosystems. Powered by OpenMetadata and Claude 3.5 Sonnet.
 
-- **🔍 Smart Discovery**: Search for tables, dashboards, and pipelines across your entire data landscape.
-- **🌿 Deep Lineage**: Trace data flow with upstream and downstream lineage visualization.
-- **✅ Data Quality**: Monitor health status and test results for data assets.
-- **🛡️ Active Governance**:
-    - Browse business glossaries and classification tags.
-    - **[New]** Apply governance tags (PII, Data Tiers) directly via AI.
-- **📝 AI Documentation**:
-    - **[New]** Update and improve data asset descriptions using AI reasoning.
-- **👥 Team Insights**: Find and contact data owners and stewards.
+## 🚀 What it does
+- **Instant Discovery**: Find any data asset using natural language.
+- **Visual Intelligence**: See lineage graphs and cascading impact radars instantly.
+- **Automated Observability**: Real-time health scores and PII detection.
 
-## 🛠️ Setup
+## 💎 Unique Features
+1. **Health Score Engine**: Multi-dimensional analysis of documentation, quality, ownership, and freshness.
+2. **PII Sentinel**: Automatic detection and alerting of sensitive data with owner lookup.
+3. **Intent-Aware Routing**: Claude-powered engine that resolves context and pronouns across messages.
+4. **Interactive Lineage**: Custom React Flow visualization for upstream/downstream navigation.
+5. **Impact Radar**: Predictive analysis of downstream cascading effects.
 
-### Prerequisites
-- Python 3.10+
-- An OpenMetadata instance (or use the [Public Sandbox](https://sandbox.open-metadata.org))
-- A valid OpenMetadata JWT Token
+## 🛠️ Tech Stack
+- **Framework**: Next.js 14 (App Router)
+- **AI**: Anthropic Claude 3.5 Sonnet
+- **Styling**: Tailwind CSS + Framer Motion
+- **Visualization**: React Flow
+- **Data Source**: OpenMetadata REST APIs
 
-### Installation
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/natureloved/MetaFlux.git
-   cd MetaFlux
-   ```
-2. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
-3. Configure environment variables:
-   Create a `.env` file based on `.env.example`:
+## ⚙️ Setup
+1. Clone the repository.
+2. Install dependencies: `npm install`
+3. Create `.env.local` with:
    ```env
-   OPENMETADATA_URL=https://sandbox.open-metadata.org
-   OPENMETADATA_TOKEN=your_jwt_token_here
+   OPENMETADATA_BASE_URL=https://sandbox.open-metadata.org/api/v1
+   ANTHROPIC_API_KEY=your_key_here
    ```
+4. Run locally: `npm run dev`
 
-## 🔌 Connecting to Claude Desktop
-
-Add this to your `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "metaflux": {
-      "command": "python",
-      "args": ["/path/to/MetaFlux/server.py"],
-      "env": {
-        "OPENMETADATA_URL": "https://sandbox.open-metadata.org",
-        "OPENMETADATA_TOKEN": "your_token_here"
-      }
-    }
-  }
-}
-```
-
-## 📖 How to Use
-
-Once connected, you can use natural language to interact with your data catalog.
-
-### Example Prompts
-- **Discovery**: "Find all tables related to 'customer' and tell me who owns them."
-- **Lineage**: "Show me the upstream sources for the `raw_customers` table."
-- **Quality**: "Are there any failing data quality tests in the `ecommerce` schema?"
-- **Governance**: "List all classification tags available in our catalog."
-- **Updates**: "Write a markdown description for the `dim_customer` table based on its columns."
-
-### Example Workflow: Owner Lookup
-**User**: *"Who is the owner of the `customer_metrics` table and what is their email?"*
-
-**Claude's Internal Logic**:
-1.  Calls `describe_table(table_fqn="...")` to find the owner name.
-2.  Calls `user_info(username="shailesh.parmar")` to fetch the email and team details.
-3.  **Response**: *"The owner of `customer_metrics` is Shailesh Parmar (shailesh.parmar@example.com) from the Engineering team."*
-
-## 🧪 Testing
-
-Test the tools using the MCP Inspector:
-```bash
-npx @modelcontextprotocol/inspector python server.py
-```
-
-## 📝 License
-Apache License 2.0
+## 🔗 How it uses OpenMetadata
+- **Auth**: Automated JWT login via `/api/v1/users/login`.
+- **Discovery**: Full-text search via `/api/v1/search/query`.
+- **Entity Metadata**: Detailed schema and stats via `/api/v1/tables`.
+- **Lineage**: Graph traversal via `/api/v1/lineage`.
+- **Quality**: Test results via `/api/v1/dataQuality`.
