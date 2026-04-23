@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(& \"C:\\\\Users\\\\HP\\\\AppData\\\\Local\\\\Microsoft\\\\WindowsApps\\\\python.exe\" --version)",
+      "PowerShell(python --version)",
+      "PowerShell(pip --version)"
+    ]
+  }
+}
