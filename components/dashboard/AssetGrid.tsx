@@ -35,7 +35,7 @@ export default function AssetGrid() {
     return (
       <div className="grid grid-cols-2 gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-40 bg-white/5 animate-pulse rounded-2xl border border-white/5" />
+          <div key={i} className="h-40 bg-[#09090f] animate-shimmer rounded-xl border border-white/5 overflow-hidden" />
         ))}
       </div>
     );
@@ -44,8 +44,15 @@ export default function AssetGrid() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest">Trending Assets</h2>
-        <button className="text-xs text-blue-500 hover:text-blue-400 transition-colors">View All</button>
+        <div className="flex items-center gap-2">
+          <h2 className="text-[11px] font-bold text-gray-600 uppercase tracking-[0.2em]">Trending Assets</h2>
+          <span className="text-[9px] font-bold text-cyan-500/60 bg-cyan-500/10 border border-cyan-500/15 px-1.5 py-0.5 rounded-md tabular-nums">
+            {assets.length}
+          </span>
+        </div>
+        <button className="text-[11px] text-cyan-500/70 hover:text-cyan-400 transition-colors font-medium">
+          View All →
+        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
