@@ -25,7 +25,7 @@ interface Message {
   timestamp: Date;
 }
 
-export default function ChatInterface() {
+export default function ChatInterface({ mode = 'full' }: { mode?: 'full' | 'sidebar' }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -93,6 +93,61 @@ export default function ChatInterface() {
       setIsLoading(false);
     }
   };
+
+  if (mode === 'sidebar') {
+    return (
+      <div className="flex flex-col h-full bg-[#0a0a0a] border-l border-white/5 w-80">
+        <div className="p-4 border-b border-white/5 flex items-center gap-2">
+          <Sparkles size={16} className="text-blue-500" />
+          <span className="font-bold text-xs uppercase tracking-widest text-white">Assistant</span>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+          {messages.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-center opacity-50 px-4">
+              <Sparkles size={24} className="mb-4" />
+              <p className="text-xs">Ask me anything about your data catalog.</p>
+            </div>
+          ) : (
+            messages.map((msg) => (
+              <div key={msg.id} className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}>
+                <div className={cn("max-w-[90%] space-y-1", msg.role === 'user' ? "items-end" : "items-start")}>
+                  <div className={cn(
+                    "p-3 rounded-xl text-xs leading-relaxed",
+                    msg.role === 'user' 
+                      ? "bg-blue-600 text-white rounded-tr-none" 
+                      : "bg-[#111] border border-white/10 rounded-tl-none"
+                  )}>
+                    {msg.content}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+
+        <div className="p-4 border-t border-white/5">
+          <form onSubmit={handleSubmit} className="relative">
+            <input
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type a command..."
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-4 pr-10 focus:outline-none focus:border-blue-500/50 text-xs"
+            />
+            <button
+              type="submit"
+              disabled={isLoading || !input.trim()}
+              className="absolute right-2 top-1.5 text-blue-500 disabled:opacity-50"
+            >
+              <Send size={14} />
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-[#080808] text-white">
