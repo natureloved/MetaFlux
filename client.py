@@ -40,8 +40,7 @@ class OpenMetadataClient:
         response = self._client.get(
             f"{self.base_url}/api/v1/tables/name/{fqn}",
             params={
-                "fields": "columns,owners,tags,followers,dataModel,"
-                          "tableConstraints,usageSummary,tableProfile"
+                "fields": "columns,owners,tags,followers,dataModel,usageSummary"
             },
         )
         response.raise_for_status()
