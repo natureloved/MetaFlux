@@ -114,3 +114,33 @@ body {
 .animate-float {
   animation: float-y 3.5s ease-in-out infinite;
 }
+
+/* ─── Finer grid overlay ─── */
+.bg-grid-fine {
+  background-image:
+    linear-gradient(rgba(6, 182, 212, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 182, 212, 0.022) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* ─── Aurora gradient text ─── */
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50%       { background-position: 100% 50%; }
+}
+.text-gradient-aurora {
+  background: linear-gradient(135deg, #22d3ee, #818cf8, #34d399, #22d3ee);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 6s ease-in-out infinite;
+}
+
+/* ─── Command bar glow ─── */
+.command-bar-glow {
+  filter: drop-shadow(0 0 20px rgba(6, 182, 212, 0.10));
+}
+.command-bar-glow:focus-within {
+  filter: drop-shadow(0 0 28px rgba(6, 182, 212, 0.18));
+}

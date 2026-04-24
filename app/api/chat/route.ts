@@ -7,6 +7,21 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
 });
 
+/**
+ * Helper to strip markdown and parse JSON from AI response
+ */
+function parseAIResponse(text: string) {
+  try {
+    // Try to find JSON block
+    const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/) || text.match(/```([\s\S]*?)```/);
+    const cleanText = jsonMatch ? jsonMatch[1] : text;
+    return JSON.parse(cleanText.trim());
+  } catch (e) {
+    console.error('Failed to parse AI response as JSON:', text);
+    throw new Error('AI returned invalid JSON format');
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { message, sessionContext } = await req.json();
@@ -28,14 +43,13 @@ For all others, response is a short intro (e.g. 'Here is the lineage for orders_
 Always resolve pronouns like 'that table' or 'it' using the session context.`;
 
     const response = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-opus-4-6',
       max_tokens: 1000,
       system: systemPrompt,
       messages: [{ role: 'user', content: message }],
     });
 
-    // @ts-ignore
-    const aiResult = JSON.parse(response.content[0].text);
+    const aiResult = parseAIResponse(response.content[0].text);
     const { intent, query, secondaryQuery, response: aiResponse } = aiResult;
 
     let data: any = null;

@@ -8,7 +8,7 @@ export async function getToken() {
   try {
     const response = await axios.post(`${process.env.OPENMETADATA_BASE_URL}/users/login`, {
       email: "admin@open-metadata.org",
-      password: "Admin@1234!"
+      password: Buffer.from("Admin@1234!").toString('base64')
     });
 
     cachedToken = response.data.accessToken;

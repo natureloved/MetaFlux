@@ -96,28 +96,47 @@ export default function ChatInterface({ mode = 'full' }: { mode?: 'full' | 'side
 
   if (mode === 'sidebar') {
     return (
-      <div className="flex flex-col h-full bg-[#0a0a0a] border-l border-white/5 w-80">
-        <div className="p-4 border-b border-white/5 flex items-center gap-2">
-          <Sparkles size={16} className="text-blue-500" />
-          <span className="font-bold text-xs uppercase tracking-widest text-white">Assistant</span>
+      <div className="flex flex-col h-full bg-[#0a0a15] w-full">
+        {/* Header */}
+        <div className="px-4 py-3.5 border-b border-white/5 flex items-center justify-between flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-cyan-500/10">
+              <Sparkles size={13} className="text-cyan-400" />
+            </div>
+            <span className="font-bold text-[11px] uppercase tracking-widest text-white">
+              AI Assistant
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20">
+            <span className="w-1 h-1 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">Live</span>
+          </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
           {messages.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center opacity-50 px-4">
-              <Sparkles size={24} className="mb-4" />
-              <p className="text-xs">Ask me anything about your data catalog.</p>
+            <div className="h-full flex flex-col items-center justify-center text-center px-4">
+              <div className="w-10 h-10 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center mb-3">
+                <Sparkles size={18} className="text-cyan-400 opacity-70" />
+              </div>
+              <p className="text-xs text-gray-500 leading-relaxed">
+                Ask me anything about your data catalog. Try a query like{' '}
+                <span className="text-cyan-400/80">&quot;find PII tables&quot;</span>.
+              </p>
             </div>
           ) : (
             messages.map((msg) => (
-              <div key={msg.id} className={cn("flex w-full", msg.role === 'user' ? "justify-end" : "justify-start")}>
-                <div className={cn("max-w-[90%] space-y-1", msg.role === 'user' ? "items-end" : "items-start")}>
-                  <div className={cn(
-                    "p-3 rounded-xl text-xs leading-relaxed",
-                    msg.role === 'user' 
-                      ? "bg-blue-600 text-white rounded-tr-none" 
-                      : "bg-[#111] border border-white/10 rounded-tl-none"
-                  )}>
+              <div key={msg.id} className={cn('flex w-full', msg.role === 'user' ? 'justify-end' : 'justify-start')}>
+                <div className={cn('max-w-[90%]', msg.role === 'user' ? 'items-end' : 'items-start')}>
+                  <div
+                    className={cn(
+                      'p-3 rounded-xl text-xs leading-relaxed',
+                      msg.role === 'user'
+                        ? 'bg-cyan-500/20 border border-cyan-500/30 text-white rounded-tr-none'
+                        : 'bg-white/5 border border-white/8 text-gray-300 rounded-tl-none'
+                    )}
+                  >
                     {msg.content}
                   </div>
                 </div>
@@ -127,19 +146,20 @@ export default function ChatInterface({ mode = 'full' }: { mode?: 'full' | 'side
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="p-4 border-t border-white/5">
+        {/* Input */}
+        <div className="p-3 border-t border-white/5 flex-shrink-0">
           <form onSubmit={handleSubmit} className="relative">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type a command..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl py-2 pl-4 pr-10 focus:outline-none focus:border-blue-500/50 text-xs"
+              placeholder="Ask about your data…"
+              className="w-full bg-white/5 border border-white/10 rounded-xl py-2.5 pl-4 pr-10 focus:outline-none focus:border-cyan-500/40 focus:bg-white/[0.07] text-xs transition-all placeholder:text-gray-600"
             />
             <button
               type="submit"
               disabled={isLoading || !input.trim()}
-              className="absolute right-2 top-1.5 text-blue-500 disabled:opacity-50"
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-cyan-500 disabled:opacity-30 hover:text-cyan-300 transition-colors"
             >
               <Send size={14} />
             </button>
