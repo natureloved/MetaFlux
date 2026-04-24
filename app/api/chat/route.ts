@@ -49,7 +49,11 @@ Always resolve pronouns like 'that table' or 'it' using the session context.`;
       messages: [{ role: 'user', content: message }],
     });
 
-    const aiResult = parseAIResponse(response.content[0].text);
+    const content = response.content[0];
+    if (content.type !== 'text') {
+      throw new Error('AI did not return a text response');
+    }
+    const aiResult = parseAIResponse(content.text);
     const { intent, query, secondaryQuery, response: aiResponse } = aiResult;
 
     let data: any = null;
