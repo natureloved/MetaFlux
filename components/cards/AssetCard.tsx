@@ -1,84 +1,154 @@
 'use client';
 
-import { Database, User, Activity } from 'lucide-react';
+import { useState } from 'react';
+import { Database, BarChart2, GitMerge } from 'lucide-react';
 import HealthScoreRing from './HealthScoreRing';
-import { HealthScore } from '../../types/openmetadata';
+import type { SearchResult, HealthScore, Tag } from '../../types/openmetadata';
 
-interface AssetCardProps {
-  asset: any;
-  healthScore?: HealthScore;
+interface Props {
+  result: SearchResult;
+  health: HealthScore;
+  onClick?: () => void;
 }
 
-const TAG_COLORS = [
-  'bg-cyan-500/10 border-cyan-500/20 text-cyan-400',
-  'bg-violet-500/10 border-violet-500/20 text-violet-400',
-  'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
-];
+/* ── Entity icon ── */
+function EntityIcon({ entityType }: { entityType: string }) {
+  const t = entityType.toLowerCase();
+  if (t.includes('dashboard')) return <BarChart2 size={14} />;
+  if (t.includes('pipeline') || t.includes('workflow')) return <GitMerge size={14} />;
+  return <Database size={14} />;
+}
 
-export default function AssetCard({ asset, healthScore }: AssetCardProps) {
-  const source = asset._source || asset;
-  const tags = source.tags?.slice(0, 3) ?? [];
+/* ── Tag classification ── */
+type TagKind = 'gold' | 'silver' | 'bronze' | 'pii' | 'domain';
+
+function classifyTag(tagFQN: string): TagKind {
+  const lower = tagFQN.toLowerCase();
+  if (lower.includes('gold'))   return 'gold';
+  if (lower.includes('silver')) return 'silver';
+  if (lower.includes('bronze')) return 'bronze';
+  if (/pii|sensitive/.test(lower)) return 'pii';
+  return 'domain';
+}
+
+const TAG_STYLE: Record<TagKind, { bg: string; color: string; border: string }> = {
+  gold:   { bg: '#1f1600', color: '#f59e0b', border: '#3d2c00' },
+  silver: { bg: '#181818', color: '#9ca3af', border: '#2e2e2e' },
+  bronze: { bg: '#0a1a0d', color: '#22c55e', border: '#12341a' },
+  pii:    { bg: '#1f0808', color: '#ef4444', border: '#3d1010' },
+  domain: { bg: '#080f1f', color: '#60a5fa', border: '#0f1e3a' },
+};
+
+function TagPill({ tag }: { tag: Tag }) {
+  const kind  = classifyTag(tag.tagFQN);
+  const style = TAG_STYLE[kind];
+  const label = tag.name ?? tag.tagFQN.split('.').pop() ?? tag.tagFQN;
+  return (
+    <span style={{
+      padding: '2px 8px',
+      borderRadius: 999,
+      fontSize: 10,
+      fontFamily: 'var(--font-jetbrains-mono), monospace',
+      background: style.bg,
+      color: style.color,
+      border: `1px solid ${style.border}`,
+      whiteSpace: 'nowrap',
+    }}>
+      {label}
+    </span>
+  );
+}
+
+/* ── Card ── */
+export default function AssetCard({ result, health, onClick }: Props) {
+  const [hovered, setHovered] = useState(false);
+
+  const tags = result.tags ?? [];
 
   return (
-    <div className="group relative bg-[#09090f] border border-white/8 rounded-xl overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-500/25 hover:[box-shadow:0_4px_24px_rgba(6,182,212,0.08)]">
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '12px 14px',
+        background: '#141418',
+        border: `0.5px solid ${hovered ? 'var(--mf-border-accent)' : 'var(--mf-border)'}`,
+        borderRadius: 8,
+        cursor: onClick ? 'pointer' : 'default',
+        transition: 'border-color 0.15s',
+      }}
+    >
+      {/* Left: entity icon badge */}
+      <div style={{
+        width: 32,
+        height: 32,
+        borderRadius: 8,
+        background: '#0c0c0e',
+        border: '1px solid var(--mf-border)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+        color: 'var(--mf-text-dim)',
+      }}>
+        <EntityIcon entityType={result.entityType} />
+      </div>
 
-      {/* Left accent bar */}
-      <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-cyan-500/80 via-violet-500/60 to-transparent rounded-l-xl" />
+      {/* Middle: text content */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
 
-      {/* Top separator that glows on hover */}
-      <div className="absolute top-0 left-3 right-0 h-px bg-gradient-to-r from-cyan-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        {/* Name */}
+        <span style={{
+          fontSize: 13,
+          fontWeight: 500,
+          color: 'var(--mf-text)',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}>
+          {result.name}
+        </span>
 
-      <div className="flex justify-between items-start gap-4 p-4 pl-5">
-        {/* Left content */}
-        <div className="flex-1 min-w-0">
+        {/* FQN path */}
+        <span style={{
+          fontSize: 11,
+          fontFamily: 'var(--font-jetbrains-mono), monospace',
+          color: 'var(--mf-text-dim)',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}>
+          {result.fullyQualifiedName}
+        </span>
 
-          {/* Name row */}
-          <div className="flex items-center gap-2 mb-1.5">
-            <Database size={13} className="text-cyan-500/70 shrink-0" />
-            <h3 className="font-semibold text-white text-sm truncate group-hover:text-cyan-300 transition-colors">
-              {source.name}
-            </h3>
-          </div>
+        {/* Description */}
+        <span style={{
+          fontSize: 12,
+          color: result.description ? 'var(--mf-text-muted)' : 'var(--mf-text-dim)',
+          fontStyle: result.description ? 'normal' : 'italic',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}>
+          {result.description ?? 'No description'}
+        </span>
 
-          {/* Description */}
-          <p className="text-[11px] text-gray-600 line-clamp-2 mb-3 leading-relaxed">
-            {source.description || 'No description provided.'}
-          </p>
-
-          {/* Tags */}
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {tags.map((tag: any, idx: number) => (
-                <span
-                  key={tag.tagFQN}
-                  className={`text-[10px] border px-2 py-0.5 rounded-md font-medium ${TAG_COLORS[idx % TAG_COLORS.length]}`}
-                >
-                  {tag.tagFQN.split('.').pop()}
-                </span>
-              ))}
-            </div>
-          )}
-
-          {/* Meta row */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5 text-[10px] text-gray-600">
-              <User size={11} className="text-gray-700" />
-              <span>{source.owners?.[0]?.displayName || 'Unassigned'}</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-[10px] text-gray-600">
-              <Activity size={11} className="text-gray-700" />
-              <span className="tabular-nums">{source.usageSummary?.weeklyStats?.count ?? 0} hits/wk</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Health ring */}
-        {healthScore && (
-          <div className="shrink-0">
-            <HealthScoreRing score={healthScore} />
+        {/* Tags */}
+        {tags.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 2 }}>
+            {tags.map(tag => (
+              <TagPill key={tag.tagFQN} tag={tag} />
+            ))}
           </div>
         )}
       </div>
+
+      {/* Right: health ring */}
+      <HealthScoreRing score={health} size="sm" />
     </div>
   );
 }

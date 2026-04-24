@@ -1,5 +1,10 @@
-import DashboardShell from '@/components/dashboard/DashboardShell';
+import ErrorBoundary from '../components/ErrorBoundary';
+import ChatInterface from '../components/chat/ChatInterface';
 
 export default function Home() {
-  return <DashboardShell />;
+  return (
+    <ErrorBoundary>
+      <ChatInterface />
+    </ErrorBoundary>
+  );
 }

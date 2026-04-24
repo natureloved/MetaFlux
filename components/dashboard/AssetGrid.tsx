@@ -63,7 +63,7 @@ export default function AssetGrid() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.1 }}
           >
-            <AssetCard asset={hit} healthScore={hit.healthScore} />
+            <AssetCard result={hit._source} health={hit.healthScore} />
           </motion.div>
         ))}
       </div>

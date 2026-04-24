@@ -1,78 +1,146 @@
 'use client';
 
-import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { HealthScore } from '../../types/openmetadata';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { useState, useEffect } from 'react';
+import type { HealthScore } from '../../types/openmetadata';
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
+const GRADE_COLOR: Record<string, string> = {
+  A: '#22c55e',
+  B: '#86efac',
+  C: '#f59e0b',
+  D: '#ef4444',
+  F: '#ef4444',
+};
+
+const DIMS = ['description', 'quality', 'ownership', 'freshness'] as const;
+
+interface Props {
+  score: HealthScore;
+  size?: 'sm' | 'md';
 }
 
-export default function HealthScoreRing({ score }: { score: HealthScore }) {
-  const radius = 35;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (score.total / 100) * circumference;
+export default function HealthScoreRing({ score, size = 'md' }: Props) {
+  const [animated, setAnimated] = useState(false);
+  const [hovered,  setHovered]  = useState(false);
 
-  const color = 
-    score.total >= 65 ? '#22c55e' : 
-    score.total >= 50 ? '#f59e0b' : 
-    '#ef4444';
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setAnimated(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  const diameter  = size === 'sm' ? 48 : 64;
+  const sw        = 5;
+  const r         = (diameter - sw) / 2;
+  const cx        = diameter / 2;
+  const circum    = 2 * Math.PI * r;
+  const dashOff   = animated ? circum - (score.total / 100) * circum : circum;
+  const color     = GRADE_COLOR[score.grade] ?? '#ef4444';
+  const numSize   = size === 'sm' ? 12 : 16;
+  const gradeSize = size === 'sm' ? 8  : 9;
 
   return (
-    <div className="relative group flex flex-col items-center justify-center w-24 h-24">
-      <svg className="w-20 h-20 -rotate-90">
+    <div
+      style={{ position: 'relative', display: 'inline-block', flexShrink: 0 }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {/* Ring */}
+      <svg
+        width={diameter}
+        height={diameter}
+        style={{ display: 'block', transform: 'rotate(-90deg)' }}
+      >
+        <circle cx={cx} cy={cx} r={r} fill="none" stroke="#2a2a30" strokeWidth={sw} />
         <circle
-          cx="40"
-          cy="40"
-          r={radius}
-          stroke="#222"
-          strokeWidth="6"
-          fill="transparent"
-        />
-        <motion.circle
-          cx="40"
-          cy="40"
-          r={radius}
+          cx={cx}
+          cy={cx}
+          r={r}
+          fill="none"
           stroke={color}
-          strokeWidth="6"
-          fill="transparent"
-          strokeDasharray={circumference}
-          initial={{ strokeDashoffset: circumference }}
-          animate={{ strokeDashoffset: offset }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
+          strokeWidth={sw}
           strokeLinecap="round"
+          strokeDasharray={circum}
+          strokeDashoffset={dashOff}
+          style={{ transition: 'stroke-dashoffset 0.8s ease-out' }}
         />
       </svg>
 
-      <div className="absolute flex flex-col items-center">
-        <span className="text-xl font-bold text-white">{score.total}</span>
-        <span className="text-[10px] font-medium opacity-60 mt-[-4px] uppercase">{score.grade}</span>
+      {/* Center text */}
+      <div style={{
+        position: 'absolute',
+        inset: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        <span style={{
+          fontSize: numSize,
+          fontWeight: 700,
+          fontFamily: 'var(--font-jetbrains-mono), monospace',
+          color: 'var(--mf-text)',
+          lineHeight: 1,
+        }}>
+          {score.total}
+        </span>
+        <span style={{
+          fontSize: gradeSize,
+          color,
+          fontFamily: 'var(--font-jetbrains-mono), monospace',
+          lineHeight: 1,
+          marginTop: 2,
+        }}>
+          {score.grade}
+        </span>
       </div>
 
-      {/* Tooltip Breakdown */}
-      <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50">
-        <div className="bg-[#111] border border-white/10 rounded-lg p-3 shadow-2xl min-w-[180px]">
-          <h4 className="text-[10px] uppercase tracking-widest text-gray-400 mb-2 font-bold">Health Breakdown</h4>
-          {Object.entries(score.breakdown).map(([key, val]) => (
-            <div key={key} className="mb-2 last:mb-0">
-              <div className="flex justify-between text-[10px] text-gray-300 mb-1 capitalize">
-                <span>{key}</span>
-                <span>{val}/25</span>
+      {/* Breakdown tooltip */}
+      {hovered && (
+        <div style={{
+          position: 'absolute',
+          top: 'calc(100% + 6px)',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: '#141418',
+          border: '1px solid var(--mf-border)',
+          borderRadius: 8,
+          padding: '10px 12px',
+          zIndex: 50,
+          minWidth: 172,
+          pointerEvents: 'none',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+        }}>
+          {DIMS.map(dim => {
+            const entry = score.breakdown[dim];
+            const pct   = Math.round((entry.score / 25) * 100);
+            return (
+              <div key={dim}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{
+                    fontSize: 10,
+                    color: 'var(--mf-text-muted)',
+                    textTransform: 'capitalize',
+                    fontFamily: 'var(--font-jetbrains-mono), monospace',
+                  }}>
+                    {dim}
+                  </span>
+                  <span style={{
+                    fontSize: 10,
+                    color: 'var(--mf-text-dim)',
+                    fontFamily: 'var(--font-jetbrains-mono), monospace',
+                  }}>
+                    {entry.score}/25
+                  </span>
+                </div>
+                <div style={{ width: 60, height: 3, background: '#2a2a30', borderRadius: 999, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 999 }} />
+                </div>
               </div>
-              <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-                <motion.div 
-                  className="h-full bg-blue-500"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(val / 25) * 100}%` }}
-                  transition={{ delay: 0.2 }}
-                />
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
-      </div>
+      )}
     </div>
   );
 }
