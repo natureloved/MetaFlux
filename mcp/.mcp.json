@@ -1,9 +1,9 @@
 {
   "mcpServers": {
-    "openmetadata": {
+    "metaflux": {
       "type": "stdio",
       "command": "python",
-      "args": ["C:/Users/HP/OneDrive/Documents/Projects/MetaFlux/server.py"]
+      "args": ["C:/Users/HP/OneDrive/Documents/Projects/MetaFlux/mcp/server.py"]
     }
   }
 }
