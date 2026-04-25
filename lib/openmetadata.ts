@@ -8,7 +8,7 @@ import type {
   ImpactNode,
 } from '../types/openmetadata';
 
-const BASE_URL = 'http://sandbox.open-metadata.org/api/v1';
+const BASE_URL = 'https://sandbox.open-metadata.org/api/v1';
 
 /* ─────────────────────────────────────────────
    Core fetch wrapper

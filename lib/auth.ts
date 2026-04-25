@@ -1,4 +1,4 @@
-const LOGIN_URL = 'http://sandbox.open-metadata.org/api/v1/users/login';
+const LOGIN_URL = 'https://sandbox.open-metadata.org/api/v1/users/login';
 const TOKEN_TTL_MS = 55 * 60 * 1000; // 55 minutes
 
 let cachedToken: string | null = null;
