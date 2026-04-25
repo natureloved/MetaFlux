@@ -12,11 +12,11 @@ export function useSandboxStatus(): SandboxStatus {
 
     async function check() {
       try {
-        const res = await fetch(
-          'https://sandbox.open-metadata.org/api/v1/system/version',
-          { signal: AbortSignal.timeout(8000) },
-        );
-        if (mounted) setStatus(res.ok ? 'live' : 'offline');
+        const res = await fetch('/api/sandbox-status', {
+          signal: AbortSignal.timeout(10000),
+        });
+        const data = await res.json() as { status: string };
+        if (mounted) setStatus(data.status === 'live' ? 'live' : 'offline');
       } catch {
         if (mounted) setStatus('offline');
       }
