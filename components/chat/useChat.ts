@@ -91,14 +91,24 @@ export function useChat() {
           body: JSON.stringify({ message, sessionContext, conversationHistory }),
         });
 
-        const json = await res.json().catch(() => ({ error: 'Failed to parse server response' }));
+        interface ChatResponse {
+          error?: string;
+          intent?: string;
+          aiResponse?: string;
+          data?: unknown;
+          hasPII?: boolean;
+          piiDetails?: unknown;
+          assetsDiscovered?: AssetContext[];
+        }
+
+        const json = await res.json().catch(() => ({ error: 'Failed to parse server response' })) as ChatResponse;
         if (!res.ok || json.error) throw new Error(json.error || `Server Error: ${res.status}`);
 
         /* Merge newly discovered assets into session context */
         if (json.assetsDiscovered?.length) {
           setSessionContext(prev => {
-            const existing = new Set(prev.map(a => a.fqn));
-            const novel    = json.assetsDiscovered!.filter(a => !existing.has(a.fqn));
+            const existing = new Set(prev.map((a: AssetContext) => a.fqn));
+            const novel    = (json.assetsDiscovered as AssetContext[]).filter((a: AssetContext) => !existing.has(a.fqn));
             const merged   = [...prev, ...novel];
             writeLS(LS_SESSION, merged);
             return merged;
