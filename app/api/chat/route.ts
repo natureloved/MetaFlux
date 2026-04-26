@@ -205,9 +205,19 @@ For governance queries:
         return await getTable(query);
       } catch (err: any) {
         if (err.message.includes('404')) {
-          const searchResults = await searchAssets(query, 1);
-          if (searchResults.length > 0) {
-            return await getTable(searchResults[0].fullyQualifiedName);
+          // 1. Try search with original query
+          let results = await searchAssets(query, 1);
+          if (results.length > 0) {
+            return await getTable(results[0].fullyQualifiedName);
+          }
+
+          // 2. If it looks like a hallucinated FQN (contains dots), try basename
+          if (query.includes('.')) {
+            const basename = query.split('.').pop() || query;
+            results = await searchAssets(basename, 1);
+            if (results.length > 0) {
+              return await getTable(results[0].fullyQualifiedName);
+            }
           }
         }
         throw err;
