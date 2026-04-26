@@ -91,17 +91,8 @@ export function useChat() {
           body: JSON.stringify({ message, sessionContext, conversationHistory }),
         });
 
-        const json = await res.json() as {
-          error?: string;
-          intent?: string;
-          aiResponse?: string;
-          data?: unknown;
-          hasPII?: boolean;
-          piiDetails?: unknown;
-          assetsDiscovered?: AssetContext[];
-        };
-
-        if (json.error) throw new Error(json.error);
+        const json = await res.json().catch(() => ({ error: 'Failed to parse server response' }));
+        if (!res.ok || json.error) throw new Error(json.error || `Server Error: ${res.status}`);
 
         /* Merge newly discovered assets into session context */
         if (json.assetsDiscovered?.length) {
@@ -134,7 +125,7 @@ export function useChat() {
           {
             id:        crypto.randomUUID(),
             role:      'assistant',
-            content:   "Couldn't reach the data catalog. Try again.",
+            content:   (err as any).message || "Couldn't reach the data catalog. Try again.",
             timestamp: Date.now(),
             isError:   true,
           },

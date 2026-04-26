@@ -131,7 +131,9 @@ Intent rules:
 - general: anything else, answer directly in aiResponse
 
 For pronouns like 'it', 'that table', 'the one we just discussed':
-resolve them using sessionContext before responding.`;
+resolve them using sessionContext before responding.
+
+If the user provides a name (e.g. 'table_X') but you don't have its FQN in sessionContext, use the 'search' intent first to find it.`;
 
     const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [
       ...(conversationHistory ?? []),
@@ -166,7 +168,16 @@ resolve them using sessionContext before responding.`;
       return NextResponse.json({ error: 'AI returned unparseable response' });
     }
 
-    const { intent, primaryQuery, secondaryQuery, aiResponse } = parsed;
+    const { intent, primaryQuery, secondaryQuery, confidence } = parsed;
+    let { aiResponse } = parsed;
+
+    if (!aiResponse?.trim()) {
+      if (intent === 'search') aiResponse = `I found some assets matching "${primaryQuery}".`;
+      else if (intent === 'schema') aiResponse = `Here is the schema for ${primaryQuery}.`;
+      else if (intent === 'lineage') aiResponse = `Here is the lineage for ${primaryQuery}.`;
+      else if (intent === 'quality') aiResponse = `Here are the data quality results for ${primaryQuery}.`;
+      else aiResponse = "I've retrieved the data you requested.";
+    }
 
     let data: unknown = null;
     let hasPII = false;
@@ -266,6 +277,7 @@ resolve them using sessionContext before responding.`;
     });
 
   } catch (error: unknown) {
+    console.error('[Chat API Error]:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ error: message });
   }
