@@ -6,6 +6,7 @@ import {
   getLineage,
   getTestCases,
   getDownstreamNodes,
+  getAsset,
 } from '../../../lib/openmetadata';
 import { computeHealthScore } from '../../../lib/scoring';
 import type { TableEntity } from '../../../types/openmetadata';
@@ -24,7 +25,8 @@ function piiCheck(table: TableEntity): {
 } {
   const piiColumns: string[] = [];
 
-  for (const col of table.columns) {
+  const columns = (table as any).columns || [];
+  for (const col of columns) {
     if (col.tags?.some(tag => /pii|sensitive/i.test(tag.tagFQN))) {
       piiColumns.push(col.name);
     }
@@ -135,9 +137,9 @@ resolve them using sessionContext before responding.
 
 If the user provides a name (e.g. 'table_X') but you don't have its FQN in sessionContext, DO NOT guess a complex FQN. Just use the simple name (e.g. 'table_X') as the primaryQuery and the backend will resolve it.
 
-For governance queries:
 - To find unowned assets: use intent 'search' with primaryQuery 'NOT owners.id:*'
-- To find assets with PII: use intent 'search' with primaryQuery 'tags.tagFQN:*PII*'`;
+- To find assets with PII: use intent 'search' with primaryQuery 'tags.tagFQN:*PII*'
+- To find failing tests: use intent 'search' with primaryQuery 'testCaseResult.testCaseStatus:Failed'`;
 
     const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [
       ...(conversationHistory ?? []),
@@ -200,28 +202,27 @@ For governance queries:
       }
     };
 
-    const getRobustTable = async (query: string) => {
-      try {
-        return await getTable(query);
-      } catch (err: any) {
-        if (err.message.includes('404')) {
-          // 1. Try search with original query
-          let results = await searchAssets(query, 1);
-          if (results.length > 0) {
-            return await getTable(results[0].fullyQualifiedName);
-          }
+    const getRobustAsset = async (query: string) => {
+      // 1. Try search first to find the type and FQN
+      let results = await searchAssets(query, 1);
 
-          // 2. If it looks like a hallucinated FQN (contains dots), try basename
-          if (query.includes('.')) {
-            const basename = query.split('.').pop() || query;
-            results = await searchAssets(basename, 1);
-            if (results.length > 0) {
-              return await getTable(results[0].fullyQualifiedName);
-            }
-          }
-        }
-        throw err;
+      // 2. Fallback: try basename if it looks like a hallucinated FQN
+      if (results.length === 0 && query.includes('.')) {
+        const basename = query.split('.').pop() || query;
+        results = await searchAssets(basename, 1);
       }
+
+      // 3. Fallback: try direct getTable if it's a known table FQN
+      if (results.length === 0) {
+        try {
+          return await getTable(query);
+        } catch {
+          throw new Error(`Asset not found for: ${query}`);
+        }
+      }
+
+      const asset = await getAsset(results[0].entityType, results[0].fullyQualifiedName);
+      return { ...asset, entityType: results[0].entityType };
     };
 
     switch (intent) {
@@ -230,8 +231,8 @@ For governance queries:
         const enriched = await Promise.all(
           assets.map(async (asset) => {
             try {
-              const table = await getTable(asset.fullyQualifiedName);
-              const tests = await getTestCases(asset.fullyQualifiedName);
+              const table = await getAsset(asset.entityType, asset.fullyQualifiedName);
+              const tests = asset.entityType === 'table' ? await getTestCases(asset.fullyQualifiedName) : [];
               mergePII(piiCheck(table));
               return { ...asset, healthScore: computeHealthScore(table, tests) };
             } catch {
@@ -244,31 +245,31 @@ For governance queries:
       }
 
       case 'lineage': {
-        const table = await getRobustTable(primaryQuery);
-        const lineage = await getLineage('table', table.fullyQualifiedName);
+        const table = await getRobustAsset(primaryQuery);
+        const lineage = await getLineage(table.entityType || 'table', table.fullyQualifiedName);
         mergePII(piiCheck(table));
         data = { table, lineage };
         break;
       }
 
       case 'impact': {
-        const table = await getRobustTable(primaryQuery);
-        const lineage = await getLineage('table', table.fullyQualifiedName);
+        const table = await getRobustAsset(primaryQuery);
+        const lineage = await getLineage(table.entityType || 'table', table.fullyQualifiedName);
         data = { lineage, impacts: getDownstreamNodes(lineage) };
         break;
       }
 
       case 'schema': {
-        const table = await getRobustTable(primaryQuery);
-        const tests = await getTestCases(table.fullyQualifiedName);
+        const table = await getRobustAsset(primaryQuery);
+        const tests = table.entityType === 'table' ? await getTestCases(table.fullyQualifiedName) : [];
         mergePII(piiCheck(table));
         data = { table };
         break;
       }
 
       case 'quality': {
-        const table = await getRobustTable(primaryQuery);
-        const tests = await getTestCases(table.fullyQualifiedName);
+        const table = await getRobustAsset(primaryQuery);
+        const tests = table.entityType === 'table' ? await getTestCases(table.fullyQualifiedName) : [];
         mergePII(piiCheck(table));
         data = { table, tests, health: computeHealthScore(table, tests) };
         break;
@@ -276,8 +277,8 @@ For governance queries:
 
       case 'compare': {
         const [t1, t2] = await Promise.all([
-          getRobustTable(primaryQuery),
-          getRobustTable(secondaryQuery ?? ''),
+          getRobustAsset(primaryQuery),
+          getRobustAsset(secondaryQuery ?? ''),
         ]);
         const [tests1, tests2] = await Promise.all([
           getTestCases(t1.fullyQualifiedName).catch(() => [] as Awaited<ReturnType<typeof getTestCases>>),

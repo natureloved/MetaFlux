@@ -177,7 +177,7 @@ function QualityBody({ data, onAssetClick }: { data: QualityShape; onAssetClick:
       <AssetCard
         result={tableToResult(table)}
         health={health}
-        onClick={() => onAssetClick(table.fullyQualifiedName, table.name)}
+        onClick={() => onAssetClick?.(table.fullyQualifiedName, 'details')}
       />
       {tests.length === 0
         ? <EmptyCard icon={<ShieldCheck size={20} />} message="No data quality tests configured" />
@@ -279,7 +279,7 @@ function IntentBody({ message, piiDismissed, onDismissPII, onAssetClick }: {
                 </span>
                 {d.results.map(r => (
                   <AssetCard key={r.id} result={r} health={r.healthScore ?? NULL_HEALTH}
-                    onClick={() => onAssetClick(r.fullyQualifiedName, r.name)} />
+                    onClick={() => onAssetClick?.(r.fullyQualifiedName, 'details')} />
                 ))}
               </>
             )

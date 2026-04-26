@@ -66,12 +66,36 @@ export async function searchAssets(query: string, size = 8): Promise<SearchResul
 }
 
 /* ─────────────────────────────────────────────
-   2. getTable
-───────────────────────────────────────────── */
+   2. getAsset / getTable
+   ───────────────────────────────────────────── */
+export async function getAsset(entityType: string, fqn: string): Promise<any> {
+  let endpoint = '';
+  let fields = '';
+  
+  const type = entityType.toLowerCase();
+  if (type === 'table') {
+    endpoint = 'tables';
+    fields = 'columns,tags,owners,usageSummary,testSuite,followers,domains';
+  } else if (type === 'dashboard') {
+    endpoint = 'dashboards';
+    fields = 'charts,tags,owners,usageSummary,followers,domains';
+  } else if (type === 'pipeline') {
+    endpoint = 'pipelines';
+    fields = 'tasks,tags,owners,usageSummary,followers,domains';
+  } else if (type === 'topic') {
+    endpoint = 'topics';
+    fields = 'messageSchema,tags,owners,usageSummary,followers,domains';
+  } else {
+    endpoint = `${type}s`;
+    fields = 'tags,owners,usageSummary';
+  }
+
+  const res = await apiFetch(`/${endpoint}/name/${encodeURIComponent(fqn)}?fields=${fields}`);
+  return unwrap<any>(res, 'getAsset');
+}
+
 export async function getTable(fqn: string): Promise<TableEntity> {
-  const fields = 'columns,tags,owners,usageSummary,testSuite,followers,domains';
-  const res = await apiFetch(`/tables/name/${encodeURIComponent(fqn)}?fields=${fields}`);
-  return unwrap<TableEntity>(res, 'getTable');
+  return getAsset('table', fqn);
 }
 
 /* ─────────────────────────────────────────────
