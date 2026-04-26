@@ -27,12 +27,12 @@ function piiCheck(table: TableEntity): {
 
   const columns = (table as any).columns || [];
   for (const col of columns) {
-    if (col.tags?.some(tag => /pii|sensitive/i.test(tag.tagFQN))) {
+    if (col.tags?.some((tag: any) => /pii|sensitive/i.test(tag.tagFQN))) {
       piiColumns.push(col.name);
     }
   }
 
-  const tableTagPII = table.tags?.some(tag => /pii|sensitive/i.test(tag.tagFQN)) ?? false;
+  const tableTagPII = table.tags?.some((tag: any) => /pii|sensitive/i.test(tag.tagFQN)) ?? false;
 
   if (piiColumns.length === 0 && !tableTagPII) return { hasPII: false, piiDetails: null };
 
