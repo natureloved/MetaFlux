@@ -249,7 +249,7 @@ If the user provides a name (e.g. 'table_X') but you don't have its FQN in sessi
         
         const tests = await getTestCases(table.fullyQualifiedName);
         mergePII(piiCheck(table));
-        data = { ...table, healthScore: computeHealthScore(table, tests) };
+        data = { table };
         break;
       }
 
