@@ -8,7 +8,8 @@ import type {
   ImpactNode,
 } from '../types/openmetadata';
 
-const BASE_URL = 'https://sandbox.open-metadata.org/api/v1';
+const BASE_URL = process.env.OPENMETADATA_BASE_URL || 'https://sandbox.open-metadata.org/api/v1';
+const SEARCH_INDEX = 'table_search_index,dashboard_search_index,pipeline_search_index,topic_search_index';
 
 /* ─────────────────────────────────────────────
    Core fetch wrapper
@@ -50,7 +51,7 @@ async function unwrap<T>(res: Response, label: string): Promise<T> {
 export async function searchAssets(query: string, size = 8): Promise<SearchResult[]> {
   const params = new URLSearchParams({
     q: query,
-    index: 'dataAsset_search_index',
+    index: SEARCH_INDEX,
     from: '0',
     size: String(size),
     includeSourceFields: [
@@ -88,7 +89,7 @@ export async function getLineage(entityType: string, fqn: string): Promise<Linea
 ───────────────────────────────────────────── */
 export async function getTestCases(tableFqn: string): Promise<TestCase[]> {
   const params = new URLSearchParams({
-    entityLink: `<"<table.${tableFqn}>">`,
+    entityLink: `<#E::table::${tableFqn}>`,
     limit: '50',
     fields: 'testDefinition,testCaseResult',
   });

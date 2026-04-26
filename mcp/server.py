@@ -78,7 +78,7 @@ def search_assets(query: str, size: int = 10) -> str:
     try:
         data = api_get("/search/query", {
             "q":     query,
-            "index": "dataAsset_search_index",
+            "index": "table_search_index,dashboard_search_index,pipeline_search_index,topic_search_index",
             "from":  0,
             "size":  min(size, 25),
         })

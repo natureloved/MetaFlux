@@ -127,7 +127,8 @@ export function useChat() {
             timestamp:  Date.now(),
           },
         ]);
-      } catch {
+      } catch (err) {
+        console.error('Chat API Error:', err);
         setMessages(prev => [
           ...prev,
           {
