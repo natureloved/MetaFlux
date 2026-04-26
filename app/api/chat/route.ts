@@ -122,13 +122,13 @@ Respond ONLY with a valid JSON object — no markdown, no extra text:
 }
 
 Intent rules:
-- search: user wants to find assets (tables, dashboards, pipelines)
-- lineage: user wants upstream/downstream relationships
-- impact: user asks what breaks/is affected if something changes
-- schema: user wants to see columns/structure of a specific table
-- quality: user asks about test results, data quality, freshness
-- compare: user wants to compare two assets side by side
-- general: anything else, answer directly in aiResponse
+- search: General asset searches like "find PII", "failing tests", "customer tables"
+- lineage: Upstream/downstream mapping for a specific asset
+- impact: Downstream risk/blast-radius for a specific asset
+- schema: Structure/columns for a specific asset
+- quality: Reliability/test results for a specific asset
+- compare: Side-by-side comparison of two assets
+- general: Direct answers for general questions
 
 For pronouns like 'it', 'that table', 'the one we just discussed':
 resolve them using sessionContext before responding.
@@ -196,6 +196,20 @@ If the user provides a name (e.g. 'table_X') but you don't have its FQN in sessi
       }
     };
 
+    const getRobustTable = async (query: string) => {
+      try {
+        return await getTable(query);
+      } catch (err: any) {
+        if (err.message.includes('404')) {
+          const searchResults = await searchAssets(query, 1);
+          if (searchResults.length > 0) {
+            return await getTable(searchResults[0].fullyQualifiedName);
+          }
+        }
+        throw err;
+      }
+    };
+
     switch (intent) {
       case 'search': {
         const assets = await searchAssets(primaryQuery);
@@ -216,7 +230,7 @@ If the user provides a name (e.g. 'table_X') but you don't have its FQN in sessi
       }
 
       case 'lineage': {
-        const table = await getTable(primaryQuery);
+        const table = await getRobustTable(primaryQuery);
         const lineage = await getLineage('table', table.fullyQualifiedName);
         mergePII(piiCheck(table));
         data = { table, lineage };
@@ -224,29 +238,14 @@ If the user provides a name (e.g. 'table_X') but you don't have its FQN in sessi
       }
 
       case 'impact': {
-        const lineage = await getLineage('table', primaryQuery);
+        const table = await getRobustTable(primaryQuery);
+        const lineage = await getLineage('table', table.fullyQualifiedName);
         data = { lineage, impacts: getDownstreamNodes(lineage) };
         break;
       }
 
       case 'schema': {
-        let table;
-        try {
-          table = await getTable(primaryQuery);
-        } catch (err: any) {
-          // If 404, try searching for the name to get the FQN
-          if (err.message.includes('404')) {
-            const searchResults = await searchAssets(primaryQuery, 1);
-            if (searchResults.length > 0) {
-              table = await getTable(searchResults[0].fullyQualifiedName);
-            } else {
-              throw err;
-            }
-          } else {
-            throw err;
-          }
-        }
-        
+        const table = await getRobustTable(primaryQuery);
         const tests = await getTestCases(table.fullyQualifiedName);
         mergePII(piiCheck(table));
         data = { table };
@@ -254,7 +253,7 @@ If the user provides a name (e.g. 'table_X') but you don't have its FQN in sessi
       }
 
       case 'quality': {
-        const table = await getTable(primaryQuery);
+        const table = await getRobustTable(primaryQuery);
         const tests = await getTestCases(table.fullyQualifiedName);
         mergePII(piiCheck(table));
         data = { table, tests, health: computeHealthScore(table, tests) };
@@ -263,8 +262,8 @@ If the user provides a name (e.g. 'table_X') but you don't have its FQN in sessi
 
       case 'compare': {
         const [t1, t2] = await Promise.all([
-          getTable(primaryQuery),
-          getTable(secondaryQuery ?? ''),
+          getRobustTable(primaryQuery),
+          getRobustTable(secondaryQuery ?? ''),
         ]);
         const [tests1, tests2] = await Promise.all([
           getTestCases(t1.fullyQualifiedName).catch(() => [] as Awaited<ReturnType<typeof getTestCases>>),
