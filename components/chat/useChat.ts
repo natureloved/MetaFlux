@@ -107,8 +107,8 @@ export function useChat() {
         /* Merge newly discovered assets into session context */
         if (json.assetsDiscovered?.length) {
           setSessionContext(prev => {
-            const existing = new Set(prev.map((a: AssetContext) => a.fqn));
-            const novel    = (json.assetsDiscovered as AssetContext[]).filter((a: AssetContext) => !existing.has(a.fqn));
+            const existing = new Set(prev.map(a => a.fqn));
+            const novel    = (json.assetsDiscovered || []).filter(a => !existing.has(a.fqn));
             const merged   = [...prev, ...novel];
             writeLS(LS_SESSION, merged);
             return merged;
