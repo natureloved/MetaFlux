@@ -63,8 +63,14 @@ export default function LineageView({
     );
   }
 
-  const upstream = data?.nodes?.filter(n => data?.upstreamEdges?.some((e: any) => e.fromEntity?.id === n.id)) || [];
-  const downstream = data?.nodes?.filter(n => data?.downstreamEdges?.some((e: any) => e.toEntity?.id === n.id)) || [];
+  const upstream = data?.nodes?.filter(n => data?.upstreamEdges?.some((e: any) => {
+    const id = typeof e.fromEntity === 'string' ? e.fromEntity : e.fromEntity?.id;
+    return id === n.id;
+  })) || [];
+  const downstream = data?.nodes?.filter(n => data?.downstreamEdges?.some((e: any) => {
+    const id = typeof e.toEntity === 'string' ? e.toEntity : e.toEntity?.id;
+    return id === n.id;
+  })) || [];
 
   return (
     <div style={{ padding: '24px', height: '100%', display: 'flex', flexDirection: 'column', gap: 32 }}>

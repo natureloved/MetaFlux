@@ -112,8 +112,9 @@ export function getDownstreamNodes(lineageData: LineageData): ImpactNode[] {
   // adjacency: from-id → [to-id, ...]
   const adj = new Map<string, string[]>();
   for (const edge of downstreamEdges) {
-    const from = edge.fromEntity.id;
-    const to   = edge.toEntity.id;
+    const from = typeof edge.fromEntity === 'string' ? edge.fromEntity : edge.fromEntity?.id;
+    const to   = typeof edge.toEntity === 'string' ? edge.toEntity : edge.toEntity?.id;
+    if (!from || !to) continue;
     if (!adj.has(from)) adj.set(from, []);
     adj.get(from)!.push(to);
   }
