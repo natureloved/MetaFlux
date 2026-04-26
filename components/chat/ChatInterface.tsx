@@ -178,7 +178,7 @@ export default function ChatInterface({ mode = 'full' }: ChatProps) {
   const onRetry = lastUserContent ? () => sendMessage(lastUserContent) : undefined;
 
   /* Session memory pill */
-  const memoryNames = sessionContext.slice(-3).map(a => a.name).join(' · ');
+  const memoryNames = sessionContext.slice(-3).map(a => a?.name || 'Unknown').join(' · ');
 
   const handleViewLineage = (fqn: string) => {
     setLineageAsset(fqn);

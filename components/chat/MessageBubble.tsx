@@ -120,7 +120,7 @@ function EmptyCard({ icon, message, hint }: { icon: ReactNode; message: string; 
 
 /* ── Schema ── */
 function SchemaBody({ data }: { data: SchemaShape }) {
-  const cols = data.table.columns;
+  const cols = data?.table?.columns || [];
   return (
     <div style={{ marginTop: 10, border: '0.5px solid var(--mf-border)', borderRadius: 6, overflow: 'hidden' }}>
       {/* Header */}
@@ -168,7 +168,10 @@ function testStatusStyle(s?: string) {
 }
 
 function QualityBody({ data, onAssetClick }: { data: QualityShape; onAssetClick: Props['onAssetClick'] }) {
-  const { table, tests, health } = data;
+  const table = data?.table;
+  const tests = data?.tests || [];
+  const health = data?.health || NULL_HEALTH;
+  if (!table) return <EmptyCard icon={<ShieldCheck size={20} />} message="No table data available" />;
   return (
     <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
       <AssetCard
@@ -218,8 +221,9 @@ function CompareRow({ label, v1, v2, highlight }: { label: string; v1: ReactNode
 }
 
 function CompareBody({ data, onAssetClick }: { data: CompareShape; onAssetClick: Props['onAssetClick'] }) {
-  const { table1, table2, health1, health2 } = data;
-  const owner = (t: TableEntity) => t.owners?.[0]?.displayName ?? t.owners?.[0]?.name ?? 'Unassigned';
+  const { table1, table2, health1, health2 } = data || {};
+  if (!table1 || !table2) return <EmptyCard icon={<RefreshCw size={20} />} message="Comparison data incomplete" />;
+  const owner = (t: TableEntity) => t?.owners?.[0]?.displayName ?? t?.owners?.[0]?.name ?? 'Unassigned';
   return (
     <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -286,7 +290,7 @@ function IntentBody({ message, piiDismissed, onDismissPII, onAssetClick }: {
 
     case 'lineage': {
       const d = data as LineageShape;
-      const hasEdges = (d.lineage.upstreamEdges?.length ?? 0) + (d.lineage.downstreamEdges?.length ?? 0) > 0;
+      const hasEdges = ((d.lineage?.upstreamEdges?.length ?? 0) + (d.lineage?.downstreamEdges?.length ?? 0)) > 0;
       return (
         <div style={{ marginTop: 10 }}>
           {hasEdges
