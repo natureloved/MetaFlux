@@ -8,10 +8,12 @@ import { useSandboxStatus } from '../../lib/useSandboxStatus';
 
 /* ── Constants ── */
 const NAV_ITEMS = [
-  { icon: MessageSquare, label: 'Chat',    active: true  },
-  { icon: Compass,       label: 'Explore', active: false },
-  { icon: GitMerge,      label: 'Lineage', active: false },
+  { icon: MessageSquare, label: 'Chat',    id: 'chat' },
+  { icon: Compass,       label: 'Explore', id: 'explore' },
+  { icon: GitMerge,      label: 'Lineage', id: 'lineage' },
 ] as const;
+
+type NavId = typeof NAV_ITEMS[number]['id'];
 
 const CHIPS = [
   'Show PII tables',
@@ -31,12 +33,17 @@ function sessionId() {
 /* ════════════════════════════════
    Sidebar sub-components
 ════════════════════════════════ */
-function NavButton({ item }: { item: typeof NAV_ITEMS[number] }) {
+function NavButton({ item, active, onClick }: {
+  item: typeof NAV_ITEMS[number];
+  active: boolean;
+  onClick: () => void;
+}) {
   const [hovered, setHovered] = useState(false);
   const Icon = item.icon;
-  const highlight = item.active || hovered;
+  const highlight = active || hovered;
   return (
     <button
+      onClick={onClick}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -44,7 +51,7 @@ function NavButton({ item }: { item: typeof NAV_ITEMS[number] }) {
         width: '100%', padding: '7px 10px', borderRadius: 8,
         border: 'none', cursor: 'pointer',
         fontSize: 12, fontFamily: 'inherit', fontWeight: 500,
-        background: item.active ? '#1a1a22' : hovered ? 'var(--mf-surface2)' : 'transparent',
+        background: active ? '#1a1a22' : hovered ? 'var(--mf-surface2)' : 'transparent',
         color: highlight ? 'var(--mf-accent)' : 'var(--mf-text-muted)',
         transition: 'background 0.12s, color 0.12s',
         textAlign: 'left',
@@ -137,8 +144,14 @@ export default function ChatInterface({ mode = 'full' }: ChatProps) {
   const sandboxStatus = useSandboxStatus();
 
   const [recentQueries, setRecentQueries] = useState<string[]>([]);
-  const [session] = useState(sessionId);
+  const [session, setSession] = useState<string | null>(null);
+  const [activeView, setActiveView] = useState<NavId>('chat');
   const endRef = useRef<HTMLDivElement>(null);
+
+  /* Set session ID on client to avoid hydration mismatch */
+  useEffect(() => {
+    setSession(sessionId());
+  }, []);
 
   /* Sync recent queries from localStorage whenever messages change */
   useEffect(() => {
@@ -199,7 +212,14 @@ export default function ChatInterface({ mode = 'full' }: ChatProps) {
 
           {/* Nav */}
           <nav style={{ padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {NAV_ITEMS.map(item => <NavButton key={item.label} item={item} />)}
+            {NAV_ITEMS.map(item => (
+              <NavButton
+                key={item.id}
+                item={item}
+                active={activeView === item.id}
+                onClick={() => setActiveView(item.id)}
+              />
+            ))}
           </nav>
 
           <div style={{ height: 1, background: 'var(--mf-border)', margin: '0 14px' }} />
@@ -287,42 +307,60 @@ export default function ChatInterface({ mode = 'full' }: ChatProps) {
 
         {/* Messages — scrollable, fills space between topbar and input */}
         <div className="scroll-area" style={{ flex: 1, overflowY: 'auto' }}>
-          {messages.length === 0 && !isLoading ? (
-            /* Empty state */
-            <div style={{
-              flex: 1, display: 'flex', flexDirection: 'column',
-              alignItems: 'center', justifyContent: 'center',
-              gap: 10, textAlign: 'center', padding: '40px 24px',
-              minHeight: '100%',
-            }}>
-              <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, color: 'var(--mf-text)', lineHeight: 1.15 }}>
-                MetaFlux
-              </h1>
-              <p style={{ margin: 0, fontSize: 14, color: 'var(--mf-text-muted)' }}>
-                Talk to your data catalog
-              </p>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 12 }}>
-                {CHIPS.map(chip => (
-                  <Chip key={chip} label={chip} onClick={() => sendMessage(chip)} />
-                ))}
+          {activeView === 'chat' ? (
+            messages.length === 0 && !isLoading ? (
+              /* Empty state */
+              <div style={{
+                flex: 1, display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
+                gap: 10, textAlign: 'center', padding: '40px 24px',
+                minHeight: '100%',
+              }}>
+                <h1 style={{ margin: 0, fontSize: 32, fontWeight: 700, color: 'var(--mf-text)', lineHeight: 1.15 }}>
+                  MetaFlux
+                </h1>
+                <p style={{ margin: 0, fontSize: 14, color: 'var(--mf-text-muted)' }}>
+                  Talk to your data catalog
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 12 }}>
+                  {CHIPS.map(chip => (
+                    <Chip key={chip} label={chip} onClick={() => sendMessage(chip)} />
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : (
+              /* Message thread */
+              <div style={{ maxWidth: 720, width: '100%', margin: '0 auto', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+                {messages.map(msg => (
+                  <MessageBubble
+                    key={msg.id}
+                    message={msg}
+                    onAssetClick={(fqn, name) => sendMessage(`Tell me about ${name}`)}
+                    onRetry={msg.isError ? onRetry : undefined}
+                  />
+                ))}
+
+                {/* Typing indicator */}
+                {isLoading && <LoadingBubble />}
+
+                <div ref={endRef} />
+              </div>
+            )
           ) : (
-            /* Message thread */
-            <div style={{ maxWidth: 720, width: '100%', margin: '0 auto', padding: '32px 24px', display: 'flex', flexDirection: 'column', gap: 24 }}>
-              {messages.map(msg => (
-                <MessageBubble
-                  key={msg.id}
-                  message={msg}
-                  onAssetClick={(fqn, name) => sendMessage(`Tell me about ${name}`)}
-                  onRetry={msg.isError ? onRetry : undefined}
-                />
-              ))}
-
-              {/* Typing indicator */}
-              {isLoading && <LoadingBubble />}
-
-              <div ref={endRef} />
+            <div style={{ padding: 40, textAlign: 'center', color: 'var(--mf-text-muted)' }}>
+              <div style={{ fontSize: 40, marginBottom: 16 }}>🛠️</div>
+              <h2 style={{ color: 'var(--mf-text)' }}>{activeView.charAt(0).toUpperCase() + activeView.slice(1)} view coming soon</h2>
+              <p>The AI can already provide lineage and explore assets in the Chat view.</p>
+              <button
+                onClick={() => setActiveView('chat')}
+                style={{
+                  marginTop: 16, padding: '8px 16px', borderRadius: 8,
+                  border: '1px solid var(--mf-border)', background: 'var(--mf-surface)',
+                  color: 'var(--mf-accent)', cursor: 'pointer'
+                }}
+              >
+                Back to Chat
+              </button>
             </div>
           )}
         </div>

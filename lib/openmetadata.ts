@@ -69,7 +69,7 @@ export async function searchAssets(query: string, size = 8): Promise<SearchResul
    2. getTable
 ───────────────────────────────────────────── */
 export async function getTable(fqn: string): Promise<TableEntity> {
-  const fields = 'columns,tags,owners,usageSummary,testSuite,followers,domain';
+  const fields = 'columns,tags,owners,usageSummary,testSuite,followers,domains';
   const res = await apiFetch(`/tables/name/${encodeURIComponent(fqn)}?fields=${fields}`);
   return unwrap<TableEntity>(res, 'getTable');
 }
