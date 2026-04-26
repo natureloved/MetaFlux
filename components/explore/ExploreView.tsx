@@ -151,7 +151,11 @@ function AssetCard({ asset, onViewLineage, onOpenChat }: { asset: Asset; onViewL
         <button onClick={onOpenChat} style={actionBtnStyle}>
           <MessageSquare size={12} /> Ask AI
         </button>
-        <button style={{ ...actionBtnStyle, marginLeft: 'auto', padding: '4px' }} title="Details">
+        <button 
+          onClick={onOpenChat}
+          style={{ ...actionBtnStyle, marginLeft: 'auto', padding: '4px' }} 
+          title="Details"
+        >
           <ArrowRight size={12} />
         </button>
       </div>

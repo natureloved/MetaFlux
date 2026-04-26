@@ -230,9 +230,26 @@ If the user provides a name (e.g. 'table_X') but you don't have its FQN in sessi
       }
 
       case 'schema': {
-        const table = await getTable(primaryQuery);
+        let table;
+        try {
+          table = await getTable(primaryQuery);
+        } catch (err: any) {
+          // If 404, try searching for the name to get the FQN
+          if (err.message.includes('404')) {
+            const searchResults = await searchAssets(primaryQuery, 1);
+            if (searchResults.length > 0) {
+              table = await getTable(searchResults[0].fullyQualifiedName);
+            } else {
+              throw err;
+            }
+          } else {
+            throw err;
+          }
+        }
+        
+        const tests = await getTestCases(table.fullyQualifiedName);
         mergePII(piiCheck(table));
-        data = { table };
+        data = { ...table, healthScore: computeHealthScore(table, tests) };
         break;
       }
 
