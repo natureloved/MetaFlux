@@ -49,7 +49,7 @@ export default function ExploreView({
       {/* Header & Search */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: 'var(--mf-text)' }}>Explore Catalog</h1>
+          <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, color: 'var(--mf-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 400 }}>Explore Catalog</h1>
           <p style={{ margin: '4px 0 0', color: 'var(--mf-text-dim)', fontSize: 13 }}>
             Browse and discover data assets from across the organization.
           </p>
@@ -119,7 +119,12 @@ function AssetCard({ asset, onViewLineage, onOpenChat }: { asset: Asset; onViewL
             {typeIcon}
           </div>
           <div>
-            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--mf-text)' }}>{asset.name}</h3>
+            <h3 style={{ 
+              margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--mf-text)',
+              whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 220
+            }} title={asset.name}>
+              {asset.name}
+            </h3>
             <span className="mono" style={{ fontSize: 10, color: 'var(--mf-text-dim)' }}>{asset.entityType}</span>
           </div>
         </div>

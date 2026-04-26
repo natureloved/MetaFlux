@@ -63,8 +63,8 @@ export default function LineageView({
     );
   }
 
-  const upstream = data?.nodes?.filter(n => data?.upstreamEdges?.some((e: any) => e.fromEntity === n.id)) || [];
-  const downstream = data?.nodes?.filter(n => data?.downstreamEdges?.some((e: any) => e.toEntity === n.id)) || [];
+  const upstream = data?.nodes?.filter(n => data?.upstreamEdges?.some((e: any) => e.fromEntity?.id === n.id)) || [];
+  const downstream = data?.nodes?.filter(n => data?.downstreamEdges?.some((e: any) => e.toEntity?.id === n.id)) || [];
 
   return (
     <div style={{ padding: '24px', height: '100%', display: 'flex', flexDirection: 'column', gap: 32 }}>
@@ -118,7 +118,12 @@ export default function LineageView({
                 textAlign: 'center', zIndex: 10
               }}>
                 <Database size={24} color="var(--mf-accent)" style={{ marginBottom: 12 }} />
-                <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>{data?.entity.name}</h3>
+                <h3 style={{ 
+                  margin: 0, fontSize: 16, fontWeight: 700,
+                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 300
+                }} title={data?.entity.name}>
+                  {data?.entity.name}
+                </h3>
                 <span className="mono" style={{ fontSize: 10, color: 'var(--mf-text-dim)' }}>target</span>
               </div>
             </div>
@@ -157,7 +162,12 @@ function LineageCard({ node, onClick }: { node: LineageNode; onClick: () => void
     >
       <div style={{ color: 'var(--mf-text-dim)' }}><Database size={14} /></div>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--mf-text)' }}>{node.name}</span>
+        <span style={{ 
+          fontSize: 13, fontWeight: 500, color: 'var(--mf-text)',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 160
+        }} title={node.name}>
+          {node.name}
+        </span>
         <span style={{ fontSize: 10, color: 'var(--mf-text-dim)' }}>{node.entityType || node.type}</span>
       </div>
     </div>
