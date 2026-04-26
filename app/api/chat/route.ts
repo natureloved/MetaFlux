@@ -133,7 +133,7 @@ Intent rules:
 For pronouns like 'it', 'that table', 'the one we just discussed':
 resolve them using sessionContext before responding.
 
-If the user provides a name (e.g. 'table_X') but you don't have its FQN in sessionContext, use the 'search' intent first to find it.
+If the user provides a name (e.g. 'table_X') but you don't have its FQN in sessionContext, DO NOT guess a complex FQN. Just use the simple name (e.g. 'table_X') as the primaryQuery and the backend will resolve it.
 
 For governance queries:
 - To find unowned assets: use intent 'search' with primaryQuery 'NOT owners.id:*'
