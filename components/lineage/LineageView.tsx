@@ -80,7 +80,12 @@ export default function LineageView({
           <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: 'var(--mf-text)' }}>
             Lineage Analysis
           </h1>
-          <span className="mono" style={{ fontSize: 11, color: 'var(--mf-accent)' }}>{targetFqn}</span>
+          <span className="mono" style={{ 
+            fontSize: 11, color: 'var(--mf-accent)',
+            display: 'block', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%'
+          }} title={targetFqn || ''}>
+            {targetFqn}
+          </span>
         </div>
       </div>
 
@@ -115,7 +120,7 @@ export default function LineageView({
               <div style={{
                 padding: '24px 32px', borderRadius: 16, background: 'var(--mf-surface)',
                 border: '2px solid var(--mf-accent)', boxShadow: '0 0 20px var(--mf-accent-dim)',
-                textAlign: 'center', zIndex: 10
+                textAlign: 'center', zIndex: 10, width: 320, maxWidth: '100%'
               }}>
                 <Database size={24} color="var(--mf-accent)" style={{ marginBottom: 12 }} />
                 <h3 style={{ 
